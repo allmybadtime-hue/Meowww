@@ -1,0 +1,43 @@
+name: Build Android APK from ZIP
+
+on:
+  push:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Unzip project archive
+        run: |
+          unzip -o zalupka.zip -d .
+          if [ -d "Telegram-Clone-master" ]; then
+            cp -rn Telegram-Clone-master/* . 2>/dev/null || true
+            cp -rn Telegram-Clone-master/.* . 2>/dev/null || true
+          fi
+
+      - name: Set up Java
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build APK
+        run: flutter build apk --release --no-tree-shake-icons
+
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: telegramclone-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
